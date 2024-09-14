@@ -1,12 +1,13 @@
-FROM elixir:1.14-alpine
+FROM elixir:${ELIXIR_VERSION}-alpine
 
-ARG PLEROMA_VER=develop
+ARG PLEROMA_VERSION=develop
 ARG UID=911
 ARG GID=911
 ENV MIX_ENV=prod
 
 RUN echo "http://nl.alpinelinux.org/alpine/latest-stable/main" >> /etc/apk/repositories \
     && apk update \
+    && apk upgrade --no-cache libssl3 libcrypto3 \
     && apk add git gcc g++ musl-dev make cmake file-dev \
     exiftool imagemagick libmagic ncurses postgresql-client ffmpeg
 
@@ -24,7 +25,7 @@ USER pleroma
 WORKDIR /pleroma
 
 RUN git clone -b develop https://git.pleroma.social/pleroma/pleroma.git /pleroma \
-    && git checkout ${PLEROMA_VER}
+    && git checkout ${PLEROMA_VERSION}
 
 RUN echo "import Mix.Config" > config/prod.secret.exs \
     && mix local.hex --force \
@@ -33,7 +34,8 @@ RUN echo "import Mix.Config" > config/prod.secret.exs \
     && mkdir release \
     && mix release --path /pleroma
 
-COPY ./config.exs /etc/pleroma/config.exs
+COPY --chown=pleroma --chmod=640 ./config.exs /etc/pleroma/config.exs
+RUN chmod o= /etc/pleroma/config.exs
 
 EXPOSE 4000
 
