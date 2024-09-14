@@ -21,7 +21,7 @@ Thus you will need to build the image yourself, but I explain how to do it below
 
 ## Build-time variables
 
-- **`PLEROMA_VER`** : Pleroma version (latest commit of the [`develop` branch](https://git.pleroma.social/pleroma/pleroma) by default)
+- **`PLEROMA_VERSION`** : Pleroma version (latest commit of the [`develop` branch](https://git.pleroma.social/pleroma/pleroma) by default)
 - **`GID`**: group id (default: `911`)
 - **`UID`**: user id (default: `911`)
 
@@ -38,19 +38,24 @@ version: "3.8"
 
 services:
   db:
-    image: postgres:12.1-alpine
+    image: postgres:${POSTGRES_VERSION}-alpine
     container_name: pleroma_db
     restart: always
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "pleroma"]
     environment:
-      POSTGRES_USER: pleroma
-      POSTGRES_PASSWORD: ChangeMe!
-      POSTGRES_DB: pleroma
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - ./postgres:/var/lib/postgresql/data
 
   web:
     image: pleroma
     container_name: pleroma_web
+    healthcheck:
+      test:
+        ["CMD-SHELL", "wget -q --spider --proxy=off localhost:4000 || exit 1"]
     restart: always
     ports:
       - "4000:4000"
@@ -61,21 +66,19 @@ services:
       args:
         - "UID=911"
         - "GID=911"
-        - "PLEROMA_VER=develop"
+        - "PLEROMA_VER=${PLEROMA_VERSION}"
     volumes:
       - ./uploads:/var/lib/pleroma/uploads
       - ./static:/var/lib/pleroma/static
       - ./config.exs:/etc/pleroma/config.exs:ro
-      # optional, see 'Config Override' section in README.md
-      # - ./config-override.exs:/var/lib/pleroma/config.exs:ro
     environment:
-      DOMAIN: example.com
-      INSTANCE_NAME: Pleroma
-      ADMIN_EMAIL: admin@example.com
-      NOTIFY_EMAIL: notify@example.com
-      DB_USER: pleroma
-      DB_PASS: ChangeMe!
-      DB_NAME: pleroma
+      DOMAIN: ${DOMAIN}
+      INSTANCE_NAME: ${INSTANCE_NAME}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      NOTIFY_EMAIL: ${NOTIFY_EMAIL}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASS: ${POSTGRES_PASSWORD}
+      DB_NAME: ${POSTGRES_DB}
     depends_on:
       - db
 ```
@@ -141,12 +144,12 @@ docker-compose run --rm web mix ecto.migrate # migrate the database if needed
 docker-compose up -d # recreate the containers if needed
 ```
 
-If you want to run a specific commit, you can use the `PLEROMA_VER` variable:
+If you want to run a specific commit, you can use the `PLEROMA_VERSION` variable:
 
 ```sh
-docker build -t pleroma . --build-arg PLEROMA_VER=develop # a branch
-docker build -t pleroma . --build-arg PLEROMA_VER=a9203ab3 # a commit
-docker build -t pleroma . --build-arg PLEROMA_VER=v2.0.7 # a version
+docker build -t pleroma . --build-arg PLEROMA_VERSION=develop # a branch
+docker build -t pleroma . --build-arg PLEROMA_VERSION=a9203ab3 # a commit
+docker build -t pleroma . --build-arg PLEROMA_VERSION=v2.0.7 # a version
 ```
 
 `a9203ab3` being the hash of the commit. (They're [here](https://git.pleroma.social/pleroma/pleroma/commits/develop))
