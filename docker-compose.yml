@@ -15,6 +15,7 @@ services:
       - ./postgres:/var/lib/postgresql/data
 
   web:
+    env_file: '.env'
     image: pleroma
     container_name: pleroma_web
     healthcheck:
@@ -30,7 +31,8 @@ services:
       args:
         - "UID=911"
         - "GID=911"
-        - "PLEROMA_VER=${PLEROMA_VERSION}"
+        - "PLEROMA_VERSION=${PLEROMA_VERSION}"
+        - "ELIXIR_VERSION=${ELIXIR_VERSION}"
     volumes:
       - ./uploads:/var/lib/pleroma/uploads
       - ./static:/var/lib/pleroma/static

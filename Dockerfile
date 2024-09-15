@@ -1,15 +1,16 @@
+ARG ELIXIR_VERSION
 FROM elixir:${ELIXIR_VERSION}-alpine
-
-ARG PLEROMA_VERSION=develop
-ARG UID=911
-ARG GID=911
-ENV MIX_ENV=prod
 
 RUN echo "http://nl.alpinelinux.org/alpine/latest-stable/main" >> /etc/apk/repositories \
     && apk update \
     && apk upgrade --no-cache libssl3 libcrypto3 \
     && apk add git gcc g++ musl-dev make cmake file-dev \
     exiftool imagemagick libmagic ncurses postgresql-client ffmpeg
+
+ARG PLEROMA_VERSION=develop
+ARG UID=911
+ARG GID=911
+ENV MIX_ENV=prod
 
 RUN addgroup -g ${GID} pleroma \
     && adduser -h /pleroma -s /bin/false -D -G pleroma -u ${UID} pleroma
