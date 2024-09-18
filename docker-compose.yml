@@ -22,8 +22,6 @@ services:
       test:
         ["CMD-SHELL", "wget -q --spider --proxy=off localhost:4000 || exit 1"]
     restart: always
-    ports:
-      - "4000:4000"
     build:
       context: .
       # Feel free to remove or override this section
@@ -47,3 +45,16 @@ services:
       DB_NAME: ${POSTGRES_DB}
     depends_on:
       - db
+
+  nginx:
+    image: nginx:alpine
+    container_name: pleroma_nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./static:/var/lib/pleroma/static
+    depends_on:
+      - web
